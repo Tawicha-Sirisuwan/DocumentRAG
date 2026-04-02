@@ -1,0 +1,79 @@
+<nav class="fixed top-0 left-0 w-full z-50 bg-slate-900/60 backdrop-blur-2xl border-b border-indigo-500/20 shadow-lg shadow-black/20 transition-all duration-300">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-20">
+      
+      <!-- โลโก้ และข้อความหลัก (Brand Zone) -->
+      <div class="flex items-center flex-shrink-0 cursor-pointer" routerLink="/">
+        <div class="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl mr-3 shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+        </div>
+        <span class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 tracking-wide font-sans">
+          DocuRAG
+        </span>
+      </div>
+
+      <!-- เมนูแนวนอนสำหรับจอใหญ่ (Desktop Navigation) -->
+      <div class="hidden md:block">
+        <div class="ml-10 flex items-baseline space-x-8">
+          <a routerLink="/" class="relative group text-slate-100 font-medium text-sm transition-colors py-2">
+            หน้าหลัก
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-cyan-400 transition-all duration-300 group-hover:w-full"></span>
+          </a>
+          <a href="javascript:void(0)" class="relative group text-slate-300 hover:text-slate-100 font-medium text-sm transition-colors py-2">
+            ประวัติเอกสาร
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-cyan-400 transition-all duration-300 group-hover:w-full"></span>
+          </a>
+          <a href="javascript:void(0)" class="relative group text-slate-300 hover:text-slate-100 font-medium text-sm transition-colors py-2">
+            ตั้งค่าระบบ
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-cyan-400 transition-all duration-300 group-hover:w-full"></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- ปุ่ม Action แถบขวา (Desktop) -->
+      <div class="hidden md:flex items-center space-x-4">
+        <button class="px-5 py-2.5 bg-indigo-500/20 hover:bg-indigo-500/40 border border-indigo-500/30 text-indigo-300 text-sm font-semibold rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg focus:outline-none">
+          เข้าสู่ระบบ
+        </button>
+      </div>
+
+      <!-- ปุ่มกด Menu สำหรับการเข้าผ่าน Smartphone (Mobile Toggle) -->
+      <div class="-mr-2 flex md:hidden">
+        <button type="button" (click)="toggleMenu()" class="inline-flex items-center justify-center p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none transition-colors border border-transparent hover:border-white/20">
+          <span class="sr-only">เปิดเมนูหลัก</span>
+          
+          @if (!isMenuOpen) {
+            <svg class="block w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          } @else {
+            <svg class="block w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- โซนเมนูย่อยของ Smartphone (Mobile Drawer Content) -->
+  @if (isMenuOpen) {
+    <div class="md:hidden bg-slate-900/95 backdrop-blur-2xl border-t border-white/10 shadow-2xl animate-fade-in-up">
+      <div class="px-4 pt-4 pb-4 space-y-2">
+        <a routerLink="/" class="block px-4 py-3 rounded-xl text-base font-medium text-white bg-indigo-500/20 border border-indigo-500/30">หน้าหลัก</a>
+        <a href="javascript:void(0)" class="block px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors">ประวัติเอกสาร</a>
+        <a href="javascript:void(0)" class="block px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors">ตั้งค่าระบบ</a>
+      </div>
+      <div class="pt-2 pb-4 px-4 border-t border-slate-700/50">
+        <button class="w-full px-5 py-3 mt-2 bg-indigo-500/20 hover:bg-indigo-500/40 border border-indigo-500/30 text-indigo-300 font-semibold rounded-xl transition-all duration-300 text-center text-lg">
+          เข้าสู่ระบบ
+        </button>
+      </div>
+    </div>
+  }
+</nav>
+
+<!-- Magic Space ป้องกัน Navbar ทับคอนเทนต์ เพราะตั้งค่า Navbar ให้เป็น Object Fixed -->
+<div class="h-20 w-full bg-transparent"></div>
