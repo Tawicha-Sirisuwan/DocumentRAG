@@ -3,21 +3,23 @@
     <div class="flex items-center justify-between h-20">
       
       <!-- โลโก้ และข้อความหลัก (Brand Zone) -->
-      <div class="flex items-center flex-shrink-0 cursor-pointer" routerLink="/">
+      <div class="flex items-center flex-shrink-0 cursor-pointer" routerLink="/home">
         <div class="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl mr-3 shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
           <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
           </svg>
         </div>
         <span class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 tracking-wide font-sans">
-          DocuRAG
+          DocumentRAG
         </span>
       </div>
 
-      <!-- เมนูแนวนอนสำหรับจอใหญ่ (Desktop Navigation) -->
-      <div class="hidden md:block">
+      <!-- ซ่อนเมนูทั้งหมดถ้าอยู่หน้า Login โดยใช้สัญญาณ isLoginPage() -->
+      @if (!isLoginPage()) {
+        <!-- เมนูแนวนอนสำหรับจอใหญ่ (Desktop Navigation) -->
+        <div class="hidden md:block">
         <div class="ml-10 flex items-baseline space-x-8">
-          <a routerLink="/" class="relative group text-slate-100 font-medium text-sm transition-colors py-2">
+          <a routerLink="/home" class="relative group text-slate-100 font-medium text-sm transition-colors py-2">
             หน้าหลัก
             <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-cyan-400 transition-all duration-300 group-hover:w-full"></span>
           </a>
@@ -55,14 +57,15 @@
           }
         </button>
       </div>
+      }
     </div>
   </div>
 
   <!-- โซนเมนูย่อยของ Smartphone (Mobile Drawer Content) -->
-  @if (isMenuOpen) {
+  @if (isMenuOpen && !isLoginPage()) {
     <div class="md:hidden bg-slate-900/95 backdrop-blur-2xl border-t border-white/10 shadow-2xl animate-fade-in-up">
       <div class="px-4 pt-4 pb-4 space-y-2">
-        <a routerLink="/" class="block px-4 py-3 rounded-xl text-base font-medium text-white bg-indigo-500/20 border border-indigo-500/30">หน้าหลัก</a>
+        <a routerLink="/home" class="block px-4 py-3 rounded-xl text-base font-medium text-white bg-indigo-500/20 border border-indigo-500/30">หน้าหลัก</a>
         <a href="javascript:void(0)" class="block px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors">ประวัติเอกสาร</a>
         <a href="javascript:void(0)" class="block px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors">ตั้งค่าระบบ</a>
       </div>

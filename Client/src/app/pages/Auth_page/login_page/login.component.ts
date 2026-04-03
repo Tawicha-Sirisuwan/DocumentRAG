@@ -50,7 +50,7 @@ export class LoginComponent {
       
       // ดัมมี่ออโต้เข้าสู่ระบบ
       if (email === 'admin@docurag.ai' && password === 'admin123') {
-        this.router.navigate(['/']); // Redirect กลับหน้า Home เมื่อสำเร็จ
+        this.router.navigate(['/home']); // Redirect ไปหน้าหลักของระบบเมื่อสำเร็จ
       } else {
         // กรณีผิด ให้ขึ้นแจ้งเตือนและเคลียร์ลืมรหัสผ่าน
         this.errorMessage = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง';

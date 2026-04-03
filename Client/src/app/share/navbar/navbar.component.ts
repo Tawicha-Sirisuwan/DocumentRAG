@@ -1,6 +1,7 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-navbar',
@@ -12,6 +13,16 @@ import { RouterModule } from '@angular/router';
 export class NavbarComponent {
   // สถานะเก็บการเปิด-ปิดเมนูสำหรับมุมมองมือถือ (Mobile Hamburger Menu)
   isMenuOpen = false;
+  isLoginPage = signal(false);
+
+  constructor(private readonly router: Router) {
+    // ติดตามการเปลี่ยนหน้า เพื่อเช็คว่าตอนนี้อยู่หน้า Login หรือ Register หรือไม่
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      this.isLoginPage.set(event.urlAfterRedirects.includes('/login') || event.urlAfterRedirects.includes('/register'));
+    });
+  }
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
