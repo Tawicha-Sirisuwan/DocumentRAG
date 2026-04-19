@@ -1,2 +1,8 @@
 <app-navbar></app-navbar>
-<router-outlet />
+
+<div class="flex h-[calc(100vh-5rem)] w-full">
+  <app-sidebar></app-sidebar>
+  <main class="flex-1 relative overflow-hidden bg-slate-900">
+    <router-outlet />
+  </main>
+</div>

@@ -14,7 +14,7 @@ export class NavbarComponent {
   // สถานะเก็บการเปิด-ปิดเมนูสำหรับมุมมองมือถือ (Mobile Hamburger Menu)
   isMenuOpen = false;
   isLoginPage = signal(false);
-
+  isUsername = signal("Admin DocuRAG");
   constructor(private readonly router: Router) {
     // ติดตามการเปลี่ยนหน้า เพื่อเช็คว่าตอนนี้อยู่หน้า Login หรือ Register หรือไม่
     this.router.events.pipe(

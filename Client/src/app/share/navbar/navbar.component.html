@@ -15,30 +15,24 @@
       </div>
 
       <!-- ซ่อนเมนูทั้งหมดถ้าอยู่หน้า Login โดยใช้สัญญาณ isLoginPage() -->
-      @if (!isLoginPage()) {
-        <!-- เมนูแนวนอนสำหรับจอใหญ่ (Desktop Navigation) -->
-        <div class="hidden md:block">
-        <div class="ml-10 flex items-baseline space-x-8">
-          <a routerLink="/home" class="relative group text-slate-100 font-medium text-sm transition-colors py-2">
-            หน้าหลัก
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-cyan-400 transition-all duration-300 group-hover:w-full"></span>
-          </a>
-          <a href="javascript:void(0)" class="relative group text-slate-300 hover:text-slate-100 font-medium text-sm transition-colors py-2">
-            ประวัติเอกสาร
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-cyan-400 transition-all duration-300 group-hover:w-full"></span>
-          </a>
-          <a href="javascript:void(0)" class="relative group text-slate-300 hover:text-slate-100 font-medium text-sm transition-colors py-2">
-            ตั้งค่าระบบ
-            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-cyan-400 transition-all duration-300 group-hover:w-full"></span>
-          </a>
-        </div>
-      </div>
-
-      <!-- ปุ่ม Action แถบขวา (Desktop) -->
+    
+      <!-- ยูสเซอร์โปรไฟล์ (Desktop) -->
       <div class="hidden md:flex items-center space-x-4">
-        <button routerLink="/login" class="px-5 py-2.5 bg-indigo-500/20 hover:bg-indigo-500/40 border border-indigo-500/30 text-indigo-300 text-sm font-semibold rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg focus:outline-none cursor-pointer">
-          เข้าสู่ระบบ
-        </button>
+        <div class="flex items-center gap-3 cursor-pointer group px-3 py-2 rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/10 transition-all">
+          <div class="relative w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-[2px]">
+            <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center relative overflow-hidden">
+              <svg class="w-5 h-5 text-indigo-300 group-hover:text-white transition-colors relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              <!-- เอฟเฟกต์แสงเงากระทบด้านล่าง User -->
+              <div class="absolute bottom-0 w-full h-1/2 bg-indigo-500/30 blur-md"></div>
+            </div>
+          </div>
+          <div class="flex flex-col text-left">
+             <span class="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">{{ isUsername() }}</span>
+             <span class="text-xs text-slate-400">ผู้ดูแลระบบ</span>
+          </div>
+        </div>
       </div>
 
       <!-- ปุ่มกด Menu สำหรับการเข้าผ่าน Smartphone (Mobile Toggle) -->
@@ -57,7 +51,6 @@
           }
         </button>
       </div>
-      }
     </div>
   </div>
 
@@ -69,10 +62,25 @@
         <a href="javascript:void(0)" class="block px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors">ประวัติเอกสาร</a>
         <a href="javascript:void(0)" class="block px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors">ตั้งค่าระบบ</a>
       </div>
-      <div class="pt-2 pb-4 px-4 border-t border-slate-700/50">
-        <button routerLink="/login" class="w-full px-5 py-3 mt-2 bg-indigo-500/20 hover:bg-indigo-500/40 border border-indigo-500/30 text-indigo-300 font-semibold rounded-xl transition-all duration-300 text-center text-lg">
-          เข้าสู่ระบบ
-        </button>
+      <div class="pt-4 pb-4 px-4 border-t border-slate-700/50 flex items-center justify-between">
+         <div class="flex items-center gap-3">
+           <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center p-[2px]">
+              <div class="w-full h-full bg-slate-800 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+           </div>
+           <div class="flex flex-col">
+             <span class="text-sm font-semibold text-slate-200">{{ isUsername() }}</span>
+             <span class="text-xs text-slate-400">ผู้ดูแลระบบ</span>
+           </div>
+         </div>
+         
+         <!-- ปุ่ม Logout -->
+         <a routerLink="/login" class="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors cursor-pointer" title="ออกจากระบบ">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+         </a>
       </div>
     </div>
   }

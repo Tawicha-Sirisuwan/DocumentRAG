@@ -1,10 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NavbarComponent } from './share/navbar/navbar.component'; // เรียกใช้ชึิ้นส่วน Navbar
+import { NavbarComponent } from './share/navbar/navbar.component'; 
+import { SidebarComponent } from './share/sidebar/sidebar.component'; 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavbarComponent], // ปลั๊กอินเข้าไปตรงๆ
+  imports: [RouterOutlet, NavbarComponent, SidebarComponent], 
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
