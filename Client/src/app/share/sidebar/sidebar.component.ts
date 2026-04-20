@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, Event } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
@@ -15,16 +15,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
   isAuthPage = signal(false);
   private routerSub!: Subscription;
 
-  recentChats = signal([
-    { id: 1, title: 'ตรวจสอบและปรับปรุงเรซูเม่', active: true },
-    { id: 2, title: 'ผมเป็นเด็กจบใหม่ ถ้าอยากยื่นงาน สามารถยื่น...', active: false },
-    { id: 3, title: 'ตั้งค่า Equalizer APO สำหรับหูฟัง', active: false },
-    { id: 4, title: 'ถ้าอยากลองทำ Project เกี่ยวกับ Ai เล่นๆ มี ...', active: false },
-    { id: 5, title: 'ช่วยสรุป ลักษณะงานที่ปฏิบัติ สิ่งที่ได้เรียนรู้ ...', active: false },
-    { id: 6, title: 'อธิบายโค้ดภาคผนวกโปรเจกต์', active: false },
-  ]);
+  recentChats = signal<{id: number, title: string, active: boolean, pinned?: boolean}[]>([]);
+  openMenuId = signal<number | null>(null);
+  editingChatId = signal<number | null>(null);
 
-  constructor(private router: Router) {}
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    // ปิดเมนูเมื่อคลิกที่อื่น (เงื่อนไขพื้นฐาน)
+    // การคลิกที่ตัวจุดจะถูกหยุดการทำ propagation ไว้แล้ว
+    this.openMenuId.set(null);
+  }
+
+  constructor(private readonly router: Router) {}
 
   ngOnInit() {
     this.checkRoute(this.router.url);
@@ -48,5 +50,69 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   toggleSidebar() {
     this.isCollapsed.update(val => !val);
+  }
+
+  createNewChat() {
+    const newChat = { 
+      id: Date.now(), 
+      title: 'แชทใหม่', 
+      active: true,
+      pinned: false 
+    };
+    
+    // ให้ช่องอื่นๆ เป็น inactive และนำแชทใหม่ไปแทรกไว้บนสุด
+    // ให้ช่องอื่นๆ เป็น inactive และนำแชทใหม่ไปแทรกไว้บนสุด (อันที่ไม่ได้ pin)
+    // การเรียงลำดับใหม่: เอา pinned ไว้บนแล้วตามด้วยอันใหม่
+    let updatedChats = this.recentChats().map(chat => ({ ...chat, active: false }));
+    updatedChats = [newChat, ...updatedChats].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    this.recentChats.set(updatedChats);
+  }
+
+  selectChat(chatId: number) {
+    const updatedChats = this.recentChats().map(chat => ({
+      ...chat,
+      active: chat.id === chatId
+    }));
+    this.recentChats.set(updatedChats);
+  }
+
+  toggleMenu(event: MouseEvent, chatId: number) {
+    event.stopPropagation();
+    this.openMenuId.update(current => current === chatId ? null : chatId);
+  }
+
+  deleteChat(chatId: number) {
+    const updated = this.recentChats().filter(c => c.id !== chatId);
+    this.recentChats.set(updated);
+    this.openMenuId.set(null);
+  }
+
+  pinChat(chatId: number) {
+    const updated = this.recentChats().map(c => 
+      c.id === chatId ? { ...c, pinned: !c.pinned } : c
+    );
+    // เรียงลำดับให้ Pinned ไปอยู่ด้านบนสุด
+    updated.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    this.recentChats.set(updated);
+    this.openMenuId.set(null);
+  }
+
+  startRename(chatId: number) {
+    this.editingChatId.set(chatId);
+    this.openMenuId.set(null);
+  }
+
+  saveRename(chatId: number, newTitle: string) {
+    if (newTitle.trim()) {
+      const updated = this.recentChats().map(c => 
+        c.id === chatId ? { ...c, title: newTitle.trim() } : c
+      );
+      this.recentChats.set(updated);
+    }
+    this.editingChatId.set(null);
+  }
+
+  cancelRename() {
+    this.editingChatId.set(null);
   }
 }
