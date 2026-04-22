@@ -1,16 +1,8 @@
-import { Component, ChangeDetectionStrategy, signal, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, ViewChild, ElementRef, AfterViewChecked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-
-interface ChatMessage {
-  id: string;
-  sender: 'assistant' | 'user' | 'system';
-  content: string;
-  timestamp: Date;
-  file?: { name: string; size: number };
-  isTyping?: boolean;
-}
+import { ChatService, ChatMessage } from '../../services/chat.service';
 
 @Component({
   selector: 'app-home',
@@ -24,14 +16,9 @@ export class HomeComponent implements AfterViewChecked {
   @ViewChild('chatContainer') private readonly chatContainer!: ElementRef;
   @ViewChild('fileInputForm') private readonly fileInputForm!: ElementRef<HTMLInputElement>;
   
-  messages = signal<ChatMessage[]>([
-    {
-      id: this.generateId(),
-      sender: 'assistant',
-      content: 'สวัสดีครับ! ผมคือ DocumentRAG AI ผู้ช่วยเจาะลึกเอกสารของคุณ มีเอกสารใดให้ผมช่วยอ่านหรือมีคำถามสงสัย สามารถพิมพ์ข้อความ หรือแนบไฟล์ส่งมาให้ผมได้เลยครับ ✨',
-      timestamp: new Date()
-    }
-  ]);
+  public readonly chatService = inject(ChatService);
+  
+  messages = this.chatService.activeMessages;
   
   inputText = signal('');
   selectedFile = signal<File | null>(null);
@@ -102,7 +89,7 @@ export class HomeComponent implements AfterViewChecked {
       file: file ? { name: file.name, size: file.size } : undefined
     };
     
-    this.messages.update(msgs => [...msgs, newMessage]);
+    this.chatService.addMessageToActiveChat(newMessage);
     this.inputText.set('');
     this.selectedFile.set(null);
     if (this.fileInputForm) this.fileInputForm.nativeElement.value = '';
@@ -120,10 +107,10 @@ export class HomeComponent implements AfterViewChecked {
       isTyping: true,
       timestamp: new Date()
     };
-    this.messages.update(msgs => [...msgs, typingMessage]);
+    this.chatService.addMessageToActiveChat(typingMessage);
 
     setTimeout(() => {
-      this.messages.update(msgs => msgs.filter(m => m.id !== 'typing'));
+      this.chatService.removeMessageFromActiveChat('typing');
       this.isTyping.set(false);
 
       let replyContent = '';
@@ -140,7 +127,7 @@ export class HomeComponent implements AfterViewChecked {
         timestamp: new Date()
       };
       
-      this.messages.update(msgs => [...msgs, replyMessage]);
+      this.chatService.addMessageToActiveChat(replyMessage);
     }, 2500);
   }
   
