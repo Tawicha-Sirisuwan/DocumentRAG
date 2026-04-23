@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, OnInit, OnDestroy, HostList
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, Event } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
-import { ChatService } from '../../services/chat.service';
+import { ChatService } from '../../core/services/chat.service';
 
 @Component({
   selector: 'app-sidebar',

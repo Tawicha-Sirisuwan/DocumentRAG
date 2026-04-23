@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, ViewChild, ElementRef, Afte
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { ChatService, ChatMessage } from '../../services/chat.service';
+import { ChatService, ChatMessage } from '../../core/services/chat.service';
 
 @Component({
   selector: 'app-home',
