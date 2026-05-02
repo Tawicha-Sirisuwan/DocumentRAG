@@ -1,7 +1,8 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -16,25 +17,23 @@ export class LoginComponent {
   isLoading = false;
   errorMessage: string | null = null;
 
-  constructor(private readonly fb: FormBuilder, private readonly router: Router) {
-    // 1. Initial State
-    // ตั้งค่าฟอร์มด้วย FormBuilder พร้อมใส่ Validation
+  constructor(
+    private readonly fb: FormBuilder, 
+    private readonly router: Router,
+    private readonly authService: AuthService,
+    private readonly cdr: ChangeDetectorRef
+  ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
-  // 2. Interaction
-  // สลับการมองเห็นของรหัสผ่าน
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
   }
 
-  // 3. API Logic
-  // การกดปุ่ม Login ส่งข้อมูล
   onSubmit(): void {
-    // ป้องกันกรณีผู้ใช้กดข้ามระบบ Validation
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
@@ -43,18 +42,18 @@ export class LoginComponent {
     this.isLoading = true;
     this.errorMessage = null;
 
-    // จำลองการต่อ Backend API ชั่วคราว (รอ 1.5 วินาที)
-    setTimeout(() => {
-      this.isLoading = false;
-      const { email, password } = this.loginForm.value;
-      
-      // ดัมมี่ออโต้เข้าสู่ระบบ
-      if (email === 'admin@docurag.ai' && password === 'admin123') {
-        this.router.navigate(['/home']); // Redirect ไปหน้าหลักของระบบเมื่อสำเร็จ
-      } else {
-        // กรณีผิด ให้ขึ้นแจ้งเตือนและเคลียร์ลืมรหัสผ่าน
-        this.errorMessage = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง';
+    this.authService.login(this.loginForm.value).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        // เมื่อเข้าสู่ระบบสำเร็จ พาไปที่หน้าหลัก (Home/Dashboard)
+        this.router.navigate(['/home']);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        // ดึง Error Message จาก FastAPI ที่ส่งมา (ถ้ามี)
+        this.errorMessage = err.error?.detail || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง';
+        this.cdr.markForCheck(); // อัปเดต UI เพื่อแสดง Error
       }
-    }, 1500);
+    });
   }
 }

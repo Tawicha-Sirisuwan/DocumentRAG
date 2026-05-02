@@ -1,7 +1,8 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -18,7 +19,12 @@ export class RegisterComponent {
   errorMessage: string | null = null;
   successMessage: string | null = null;
 
-  constructor(private readonly fb: FormBuilder, private readonly router: Router) {
+  constructor(
+    private readonly fb: FormBuilder, 
+    private readonly router: Router,
+    private readonly authService: AuthService,
+    private readonly cdr: ChangeDetectorRef
+  ) {
     this.registerForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
@@ -57,16 +63,25 @@ export class RegisterComponent {
 
     this.isLoading = true;
     this.errorMessage = null;
-
-    // จำลองการเชื่อมต่อ Backend
-    setTimeout(() => {
-      this.isLoading = false;
-      this.successMessage = 'สร้างบัญชีสำเร็จ! ระบบกำลังพาคุณไปยังหน้าเข้าสู่ระบบ...';
-      
-      // หน่วงเวลาให้ผู้ใช้ได้อ่านข้อความสักนิดก่อนพาไป Login
-      setTimeout(() => {
-        this.router.navigate(['/login']);
-      }, 2000);
-    }, 1500);
+    this.successMessage = null;
+    
+    // เรียกใช้ AuthService (API จริง)
+    this.authService.register(this.registerForm.value).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.successMessage = 'สร้างบัญชีสำเร็จ! ระบบกำลังพาคุณไปยังหน้าเข้าสู่ระบบ...';
+        this.cdr.markForCheck(); // อัปเดต UI 
+        
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 2000);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        // ดึง Error Message จาก FastAPI ที่ส่งมา (ถ้ามี)
+        this.errorMessage = err.error?.detail || 'เกิดข้อผิดพลาดในการสมัครสมาชิก โปรดลองใหม่อีกครั้ง';
+        this.cdr.markForCheck(); // อัปเดต UI 
+      }
+    });
   }
 }
