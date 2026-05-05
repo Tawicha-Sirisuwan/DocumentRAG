@@ -114,23 +114,23 @@ export class HomeComponent implements AfterViewChecked {
       this.documentService.uploadDocument(file).subscribe({
         next: (response) => {
           this.isUploading.set(false);
-          // อัปโหลดสำเร็จ ให้ AI ตอบกลับ
+          // อัปโหลดสำเร็จ ให้ผูก Document ID กับแชทปัจจุบัน
+          this.chatService.setDocumentIdToActiveChat(response.document_id);
           this.simulateAssistantReply(file, true);
         },
         error: (err) => {
           this.isUploading.set(false);
-          // อัปโหลดพัง ให้ AI แจ้งเตือน
           const errorMsg: ChatMessage = {
             id: this.generateId(),
             sender: 'assistant',
-            content: `❌ ขออภัยครับ เกิดข้อผิดพลาดในการอัปโหลดไฟล์ (Error: ${err.status}) โปรดลองใหม่อีกครั้ง`,
+            content: `❌ ขออภัยครับ เกิดข้อผิดพลาดในการอัปโหลดไฟล์ โปรดลองใหม่อีกครั้ง`,
             timestamp: new Date()
           };
           this.chatService.addMessageToActiveChat(errorMsg);
         }
       });
     } else if (text) {
-      // ถ้าไม่มีไฟล์ มีแต่ข้อความแชทปกติ
+      // ถ้าไม่มีไฟล์ ส่งข้อความไปหา AI
       const textMessage: ChatMessage = {
         id: this.generateId(),
         sender: 'user',
@@ -138,8 +138,58 @@ export class HomeComponent implements AfterViewChecked {
         timestamp: new Date()
       };
       this.chatService.addMessageToActiveChat(textMessage);
-      this.simulateAssistantReply(null, false);
+      
+      const activeChat = this.chatService.chats().find(c => c.id === this.chatService.activeChatId());
+      const docId = activeChat?.documentId;
+      
+      // ถ้ามีเอกสารผูกไว้ ให้ถาม AI ของจริงเลย
+      if (docId) {
+        this.askAI(docId, text);
+      } else {
+        this.simulateAssistantReply(null, false);
+      }
     }
+  }
+
+  private askAI(documentId: string, question: string) {
+    this.isTyping.set(true);
+
+    // แสดงจุดไข่ปลาว่า AI กำลังคิด
+    const typingMessage: ChatMessage = {
+      id: 'typing',
+      sender: 'assistant',
+      content: '',
+      isTyping: true,
+      timestamp: new Date()
+    };
+    this.chatService.addMessageToActiveChat(typingMessage);
+
+    // ยิง API ไปหา Backend เพื่อให้ Gemini คิดคำตอบ
+    this.chatService.askQuestion(documentId, question).subscribe({
+      next: (res) => {
+        this.chatService.removeMessageFromActiveChat('typing');
+        this.isTyping.set(false);
+
+        const replyMessage: ChatMessage = {
+          id: this.generateId(),
+          sender: 'assistant',
+          content: res.answer,
+          timestamp: new Date()
+        };
+        this.chatService.addMessageToActiveChat(replyMessage);
+      },
+      error: (err) => {
+        this.chatService.removeMessageFromActiveChat('typing');
+        this.isTyping.set(false);
+        const replyMessage: ChatMessage = {
+          id: this.generateId(),
+          sender: 'assistant',
+          content: '❌ เกิดข้อผิดพลาดในการดึงข้อมูลจาก AI (ระบบ RAG)',
+          timestamp: new Date()
+        };
+        this.chatService.addMessageToActiveChat(replyMessage);
+      }
+    });
   }
 
   private simulateAssistantReply(file: File | null, isFileSuccess: boolean = false) {
@@ -160,9 +210,9 @@ export class HomeComponent implements AfterViewChecked {
 
       let replyContent = '';
       if (file && isFileSuccess) {
-         replyContent = `✅ ผมได้รับไฟล์ **${file.name}** เรียบร้อยแล้วครับ ระบบกำลังอ่านและทำความเข้าใจเนื้อหา (Embedding) อยู่เบื้องหลัง คุณสามารถพิมพ์คำถามเกี่ยวกับเอกสารฉบับนี้ทิ้งไว้ได้เลยครับ!`;
+         replyContent = `✅ ผมได้รับไฟล์ **${file.name}** เรียบร้อยแล้วครับ ระบบอ่านและแยกแยะเนื้อหาสำเร็จ คุณสามารถพิมพ์คำถามเกี่ยวกับเอกสารฉบับนี้ได้เลย!`;
       } else {
-         replyContent = `ตอนนี้ระบบ RAG ของเรากำลังรอเชื่อมต่อกับโมเดลแชทอยู่นะครับ (ยังเป็นแค่ข้อความจำลอง) แต่คุณสามารถอัปโหลดไฟล์ PDF ได้แล้วครับ`;
+         replyContent = `⚠️ โปรดอัปโหลดไฟล์ PDF ก่อน เพื่อให้ผมสามารถดึงข้อมูลมาตอบคำถามคุณได้ครับ`;
       }
 
       const replyMessage: ChatMessage = {

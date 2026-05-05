@@ -1,4 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface ChatMessage {
   id: string;
@@ -14,10 +16,18 @@ export interface ChatSession {
   title: string;
   pinned?: boolean;
   messages: ChatMessage[];
+  documentId?: string; // เก็บ ID ของเอกสารที่ผูกกับห้องแชทนี้
+}
+
+export interface ChatResponse {
+  answer: string;
+  sources: any[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class ChatService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = 'http://localhost:8000/api/chat';
   chats = signal<ChatSession[]>([
     {
       id: 1,
@@ -137,5 +147,21 @@ export class ChatService {
       return c;
     });
     this.chats.set(updated);
+  }
+
+  setDocumentIdToActiveChat(documentId: string) {
+    const active = this.activeChatId();
+    if (!active) return;
+    const updated = this.chats().map(c => 
+      c.id === active ? { ...c, documentId } : c
+    );
+    this.chats.set(updated);
+  }
+
+  askQuestion(documentId: string, message: string): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(`${this.apiUrl}/ask`, {
+      document_id: documentId,
+      message: message
+    }, { withCredentials: true });
   }
 }

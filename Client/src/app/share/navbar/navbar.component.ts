@@ -36,8 +36,16 @@ export class NavbarComponent {
   }
 
   logout() {
-    this.authService.logout();
-    this.isUserMenuOpen.set(false);
-    this.router.navigate(['/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        this.isUserMenuOpen.set(false);
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        console.error('Logout failed', err);
+        this.isUserMenuOpen.set(false);
+        this.router.navigate(['/login']);
+      }
+    });
   }
 }

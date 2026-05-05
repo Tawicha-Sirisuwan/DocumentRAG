@@ -3,6 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth
 from app.api import document
 from app.api import chat_api
+from app.core.database import engine, Base
+from app.models.user import User
+from app.models.document import Document
+from app.models.chat import Chat
+from app.models.message import Message
+
+# สั่งให้สร้างตารางทั้งหมดที่ยังไม่มีใน Database โดยอัตโนมัติ
+# (หมายเหตุ: ส่วน Vector ย้ายไปเก็บใน ChromaDB แล้ว ไม่ต้องสร้างตาราง document_chunks)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="DocumentRAG API")
 
