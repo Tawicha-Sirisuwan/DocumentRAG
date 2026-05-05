@@ -19,7 +19,7 @@ export interface TokenResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/auth';
+  private readonly apiUrl = 'http://localhost:8000/api/auth';
   
   // สร้าง BehaviorSubject ไว้เก็บสถานะของ User แบบ Global (เผื่อเอาไปโชว์ใน Sidebar)
   private readonly currentUserSubject = new BehaviorSubject<User | null>(null);
@@ -41,31 +41,22 @@ export class AuthService {
       'Content-Type': 'application/x-www-form-urlencoded'
     });
 
-    return this.http.post<TokenResponse>(`${this.apiUrl}/login`, body.toString(), { headers }).pipe(
-      tap(response => {
-        // เมื่อ Login สำเร็จ ให้บันทึก Token ลงใน Browser
-        localStorage.setItem('access_token', response.access_token);
-      })
+    // แปะ withCredentials: true เพื่ออนุญาตให้รับ HttpOnly Cookie จาก Backend มาเก็บไว้
+    return this.http.post<TokenResponse>(`${this.apiUrl}/login`, body.toString(), { headers, withCredentials: true });
+  }
+
+  logout(): Observable<any> {
+    // ยิง API ไปให้ Backend สั่งล้าง Cookie
+    return this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).pipe(
+      tap(() => this.currentUserSubject.next(null))
     );
   }
 
-  logout(): void {
-    localStorage.removeItem('access_token');
-    this.currentUserSubject.next(null);
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem('access_token');
-  }
+  // ลบฟังก์ชัน getToken() ทิ้ง เพราะฝั่งโค้ดอ่าน HttpOnly Cookie ไม่ได้แล้ว
 
   getProfile(): Observable<User> {
-    const token = this.getToken();
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-    
-    // ดึงโปรไฟล์แล้วอัปเดตลง BehaviorSubject
-    return this.http.get<User>(`${this.apiUrl}/me`, { headers }).pipe(
+    // ไม่ต้องแนบ Header แบบ Bearer แล้ว ส่ง withCredentials ไป ระบบจะแนบ Cookie ให้อัตโนมัติ
+    return this.http.get<User>(`${this.apiUrl}/me`, { withCredentials: true }).pipe(
       tap(user => this.currentUserSubject.next(user))
     );
   }

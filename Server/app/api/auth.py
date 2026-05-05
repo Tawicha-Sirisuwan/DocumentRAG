@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.schemas import UserCreate, UserResponse, Token
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.api.deps import get_current_active_user
+from app.core.config import settings
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -38,17 +39,12 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 @router.post("/login", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    """
-    เข้าสู่ระบบ (รับข้อมูลผ่าน Form URL Encoded ตามมาตรฐาน OAuth2)
-    ผู้ใช้สามารถกรอก username เป็น 'Email' หรือ 'Username' ก็ได้
-    """
-    # ค้นหาโดยให้โอกาสเช็คทั้ง email และ username
+def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """เข้าสู่ระบบ และนำ Token ฝังลงใน HttpOnly Cookie ป้องกัน XSS"""
     user = db.query(User).filter(
         (User.email == form_data.username) | (User.username == form_data.username)
     ).first()
     
-    # ถ้าหาไม่เจอ หรือ รหัสผ่านไม่ตรง
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -56,14 +52,28 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             headers={"WWW-Authenticate": "Bearer"},
         )
         
-    # เช็คสถานะแบน
     if not user.is_active:
         raise HTTPException(status_code=400, detail="บัญชีของคุณถูกระงับการใช้งาน")
         
-    # นำ User ID ไปฝังไว้ใน Subject ของ Token
     access_token = create_access_token(data={"sub": str(user.id)})
     
+    # ฝัง JWT ลงใน HttpOnly Cookie
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,     # ป้องกันไม่ให้ JavaScript (XSS) เข้าถึงได้
+        secure=False,      # บนโปรดักชันควรเปลี่ยนเป็น True (ใช้ HTTPS)
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+    
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/logout")
+def logout(response: Response):
+    """ออกจากระบบ (ล้างค่า HttpOnly Cookie ทิ้ง)"""
+    response.delete_cookie(key="access_token", httponly=True, samesite="lax")
+    return {"message": "ออกจากระบบสำเร็จ"}
 
 @router.get("/me", response_model=UserResponse)
 def get_profile(current_user: User = Depends(get_current_active_user)):

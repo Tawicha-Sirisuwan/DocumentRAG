@@ -7,7 +7,7 @@ app = FastAPI(title="DocumentRAG API")
 # เพิ่ม CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ในโปรดักชันควรเปลี่ยนเป็น ["http://localhost:4200"] หรือโดเมนที่ใช้จริง
+    allow_origins=["http://localhost:4200"],  # ต้องระบุให้ชัดเจนถึงจะอนุญาตให้ใช้ Cookie ข้ามโดเมนได้
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
