@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth
+from app.api import document
+from app.api import chat_api
 
 app = FastAPI(title="DocumentRAG API")
 
@@ -13,8 +15,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ผูก Auth Router เข้าสู่ระบบ
+# ผูก Router เข้าสู่ระบบ
 app.include_router(auth.router)
+app.include_router(document.router)
+app.include_router(chat_api.router)
 
 @app.get("/test")
 def read_root():

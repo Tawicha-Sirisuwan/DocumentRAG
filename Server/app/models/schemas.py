@@ -26,3 +26,12 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[str] = None
+
+# ---- Schema สำหรับระบบ Chat (RAG) ----
+class ChatRequest(BaseModel):
+    document_id: str
+    message: str
+
+class ChatResponse(BaseModel):
+    answer: str
+    sources: list[dict]

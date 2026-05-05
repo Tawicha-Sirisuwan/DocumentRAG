@@ -13,5 +13,8 @@ class Settings:
     ALGORITHM: str = "HS256"
     # เวลาหมดอายุของ Token (ตั้งไว้ 7 วัน)
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 
+    
+    # Gemini API Key สำหรับระบบ RAG
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
 settings = Settings()

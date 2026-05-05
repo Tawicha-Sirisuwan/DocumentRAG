@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChatService, ChatMessage } from '../../core/services/chat.service';
+import { DocumentService } from '../../core/services/document.service';
 
 @Component({
   selector: 'app-home',
@@ -17,12 +18,14 @@ export class HomeComponent implements AfterViewChecked {
   @ViewChild('fileInputForm') private readonly fileInputForm!: ElementRef<HTMLInputElement>;
   
   public readonly chatService = inject(ChatService);
+  private readonly documentService = inject(DocumentService);
   
   messages = this.chatService.activeMessages;
   
   inputText = signal('');
   selectedFile = signal<File | null>(null);
   isTyping = signal(false);
+  isUploading = signal(false); // สถานะการอัปโหลดไฟล์
 
   ngAfterViewChecked() {
     this.scrollToBottom();
@@ -47,7 +50,12 @@ export class HomeComponent implements AfterViewChecked {
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.selectedFile.set(input.files[0]);
+      // ตรวจสอบนามสกุลไฟล์
+      if (input.files[0].name.endsWith('.pdf')) {
+        this.selectedFile.set(input.files[0]);
+      } else {
+        alert("กรุณาอัปโหลดเฉพาะไฟล์ PDF เท่านั้นครับ");
+      }
     }
   }
   
@@ -59,7 +67,11 @@ export class HomeComponent implements AfterViewChecked {
   onDrop(event: DragEvent) {
     event.preventDefault();
     if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
-      this.selectedFile.set(event.dataTransfer.files[0]);
+      if (event.dataTransfer.files[0].name.endsWith('.pdf')) {
+        this.selectedFile.set(event.dataTransfer.files[0]);
+      } else {
+        alert("กรุณาอัปโหลดเฉพาะไฟล์ PDF เท่านั้นครับ");
+      }
     }
   }
 
@@ -81,23 +93,56 @@ export class HomeComponent implements AfterViewChecked {
     
     if (!text && !file) return;
 
-    const newMessage: ChatMessage = {
-      id: this.generateId(),
-      sender: 'user',
-      content: text,
-      timestamp: new Date(),
-      file: file ? { name: file.name, size: file.size } : undefined
-    };
-    
-    this.chatService.addMessageToActiveChat(newMessage);
+    // เคลียร์กล่องข้อความทันทีให้ UX ดูเร็ว
     this.inputText.set('');
     this.selectedFile.set(null);
     if (this.fileInputForm) this.fileInputForm.nativeElement.value = '';
 
-    this.simulateAssistantReply(file);
+    if (file) {
+      // แสดงข้อความฝั่งผู้ใช้ว่ากำลังส่งไฟล์
+      const fileMessage: ChatMessage = {
+        id: this.generateId(),
+        sender: 'user',
+        content: text ? text : `อัปโหลดเอกสาร: ${file.name}`,
+        timestamp: new Date(),
+        file: { name: file.name, size: file.size }
+      };
+      this.chatService.addMessageToActiveChat(fileMessage);
+
+      // เรียก Service อัปโหลดไฟล์ตัวจริง!
+      this.isUploading.set(true);
+      this.documentService.uploadDocument(file).subscribe({
+        next: (response) => {
+          this.isUploading.set(false);
+          // อัปโหลดสำเร็จ ให้ AI ตอบกลับ
+          this.simulateAssistantReply(file, true);
+        },
+        error: (err) => {
+          this.isUploading.set(false);
+          // อัปโหลดพัง ให้ AI แจ้งเตือน
+          const errorMsg: ChatMessage = {
+            id: this.generateId(),
+            sender: 'assistant',
+            content: `❌ ขออภัยครับ เกิดข้อผิดพลาดในการอัปโหลดไฟล์ (Error: ${err.status}) โปรดลองใหม่อีกครั้ง`,
+            timestamp: new Date()
+          };
+          this.chatService.addMessageToActiveChat(errorMsg);
+        }
+      });
+    } else if (text) {
+      // ถ้าไม่มีไฟล์ มีแต่ข้อความแชทปกติ
+      const textMessage: ChatMessage = {
+        id: this.generateId(),
+        sender: 'user',
+        content: text,
+        timestamp: new Date()
+      };
+      this.chatService.addMessageToActiveChat(textMessage);
+      this.simulateAssistantReply(null, false);
+    }
   }
 
-  private simulateAssistantReply(file: File | null) {
+  private simulateAssistantReply(file: File | null, isFileSuccess: boolean = false) {
     this.isTyping.set(true);
 
     const typingMessage: ChatMessage = {
@@ -114,10 +159,10 @@ export class HomeComponent implements AfterViewChecked {
       this.isTyping.set(false);
 
       let replyContent = '';
-      if (file) {
-         replyContent = `📌 **สรุปข้อมูลและใจความสำคัญ (${file.name}):**\n\n- ตรวจพบเป้าหมายทางการเงินและนโยบายการควบคุมต้นทุน\n- โครงการ DocumentRAG นี้เป็นส่วนหนึ่งในการสนับสนุนการวิเคราะห์ข้อมูล\n\nคุณมีคำถามเพิ่มเติมเกี่ยวกับข้อมูลชุดนี้หรือไม่ครับ?`;
+      if (file && isFileSuccess) {
+         replyContent = `✅ ผมได้รับไฟล์ **${file.name}** เรียบร้อยแล้วครับ ระบบกำลังอ่านและทำความเข้าใจเนื้อหา (Embedding) อยู่เบื้องหลัง คุณสามารถพิมพ์คำถามเกี่ยวกับเอกสารฉบับนี้ทิ้งไว้ได้เลยครับ!`;
       } else {
-         replyContent = `ได้รับข้อความแล้วครับ ผมกำลังค้นหาและรวบรวมข้อมูลในบริบทที่คุณถาม เพื่อประมวลผลคำตอบที่ดีที่สุดให้ครับ`;
+         replyContent = `ตอนนี้ระบบ RAG ของเรากำลังรอเชื่อมต่อกับโมเดลแชทอยู่นะครับ (ยังเป็นแค่ข้อความจำลอง) แต่คุณสามารถอัปโหลดไฟล์ PDF ได้แล้วครับ`;
       }
 
       const replyMessage: ChatMessage = {
@@ -128,7 +173,7 @@ export class HomeComponent implements AfterViewChecked {
       };
       
       this.chatService.addMessageToActiveChat(replyMessage);
-    }, 2500);
+    }, 1500);
   }
   
   formatBytes(bytes: number, decimals = 2) {
